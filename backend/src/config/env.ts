@@ -6,8 +6,13 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   HOST: z.string().min(1).default("127.0.0.1"),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  AUTH_SECRET: z.string().min(1, "AUTH_SECRET is required"),
-  SESSION_SECRET: z.string().min(1, "SESSION_SECRET is required"),
+  SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters"),
+  SESSION_COOKIE_NAME: z.string().regex(/^[A-Za-z0-9_-]+$/).default("iron_peak_session"),
+  SESSION_TTL_HOURS: z.coerce.number().positive().max(24 * 30).default(12),
+  REMEMBER_SESSION_TTL_DAYS: z.coerce.number().positive().max(365).default(30),
+  ARGON2_MEMORY_COST: z.coerce.number().int().min(8 * 1024).default(19456),
+  ARGON2_TIME_COST: z.coerce.number().int().min(1).max(10).default(2),
+  ARGON2_PARALLELISM: z.coerce.number().int().min(1).max(8).default(1),
   FRONTEND_URL: z.string().url().default("http://localhost:5173"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
 });
@@ -19,6 +24,9 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
   if (!result.success) {
     const details = result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");
     throw new Error(`Invalid environment configuration: ${details}`);
+  }
+  if (result.data.NODE_ENV === "production" && result.data.SESSION_SECRET.includes("replace-with")) {
+    throw new Error("Invalid environment configuration: SESSION_SECRET must be a real production secret");
   }
   return result.data;
 }
