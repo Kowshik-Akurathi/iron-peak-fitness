@@ -8,6 +8,7 @@ import { loadEnv, type AppEnv } from "./config/env.js";
 import { registerErrorHandler } from "./middleware/error-handler.js";
 import { healthRoutes } from "./routes/health.js";
 import { authRoutes } from "./routes/auth.js";
+import { customerRoutes } from "./routes/customer.js";
 
 export async function buildApp(env: AppEnv = loadEnv()): Promise<FastifyInstance> {
   const app = Fastify({
@@ -38,6 +39,7 @@ export async function buildApp(env: AppEnv = loadEnv()): Promise<FastifyInstance
   registerErrorHandler(app);
   await app.register(healthRoutes, { prefix: "/api/v1" });
   await app.register(authRoutes, { prefix: "/api/v1" });
+  await app.register(customerRoutes, { prefix: "/api/v1" });
 
   return app;
 }

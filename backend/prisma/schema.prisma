@@ -287,6 +287,7 @@ model CartItem {
   cartId    String          @db.Uuid
   productId String          @db.Uuid
   variantId String?         @db.Uuid
+  variantSnapshot Json?
   quantity  Int             @default(1)
   cart      Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
   product   Product         @relation(fields: [productId], references: [id], onDelete: Restrict)

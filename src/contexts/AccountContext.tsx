@@ -1,22 +1,29 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { DemoCustomer } from '../types'
-import { getDemoAccount, resetDemoAccount, saveDemoAccount } from '../services/demoAccountService'
+import { isCustomerProfileApiEnabled, loadAccount, readAccount, resetAccount, saveAccount } from '../services/accountService'
 import { AccountContext } from './AccountContextStore'
 
 export function AccountProvider({ children }: { children: ReactNode }) {
-  const [customer, setCustomer] = useState<DemoCustomer>(getDemoAccount)
-  const loading = false
+  const [customer, setCustomer] = useState<DemoCustomer>(readAccount)
+  const [loading, setLoading] = useState(isCustomerProfileApiEnabled)
+
+  useEffect(() => {
+    if (!isCustomerProfileApiEnabled) return
+    let active = true
+    void loadAccount().then((account) => { if (active && account) setCustomer(account) }).catch(() => undefined).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
 
   const updateProfile = useCallback((updates: Partial<DemoCustomer>) => {
     setCustomer((current) => {
       const next = { ...current, ...updates }
-      saveDemoAccount(next)
+      saveAccount(next, updates)
       return next
     })
   }, [])
 
   const resetProfile = useCallback(() => {
-    const next = resetDemoAccount()
+    const next = resetAccount()
     setCustomer(next)
     return next
   }, [])
